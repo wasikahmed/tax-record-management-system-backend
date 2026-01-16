@@ -1,36 +1,14 @@
-# from rest_framework import generics, permissions
-
-# from .models import TaxPayerProfile, TaxOfficerProfile
-# from .serializers import TaxPayerProfileSerializer, TaxOfficerProfileSerializer
-
-# class TaxPayerListCreateView(generics.ListCreateAPIView):
-#     queryset = TaxPayerProfile.objects.all()
-#     serializer_class = TaxPayerProfileSerializer
-
-#     def get_permissions(self):
-#         if self.request.method == 'POST':
-#             return [permissions.AllowAny()]
-#         return [permissions.IsAuthenticated()]
-    
-# class TaxPayerDetailsView(generics.RetrieveUpdateDestroyAPIView):
-#     queryset = TaxPayerProfile.objects.all()
-#     serializer_class = TaxOfficerProfileSerializer
-#     permission_classes = [permissions.AllowAny]
-#     lookup_field = 'pk'
-
-
-
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 
-from .models import TaxPayerProfile, TaxZone, TaxCategory
+from .models import TaxPayerProfile, TaxZone, TaxCategory, TaxOfficerProfile
 from .serializers import (
     TaxPayerProfileSerializer,
     TaxZoneSerializer,
-    TaxCategorySerializer
+    TaxCategorySerializer,
+    TaxOfficerProfileSerializer
 )
 
 
@@ -100,5 +78,46 @@ class TaxPayerDetailView(APIView):
         user = profile.user
         # if User is deleted, Profile is deleted
         # if Profile is deleted, User might remain unless explicitely handeled
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# Tax Officer Views
+
+class TaxOfficerListCreateView(APIView):
+    def get(self, request):
+        profiles = TaxOfficerProfile.objects.all()
+        serializer = TaxOfficerProfileSerializer(profiles, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        serializer = TaxOfficerProfileSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TaxOfficerDetailView(APIView):
+    def get_object(self, officer_id):
+        return get_object_or_404(TaxOfficerProfile, officer_id)
+    
+    def get(self, request, officer_id):
+        profile = self.get_object(officer_id)
+        serializer = TaxOfficerProfileSerializer(profile)
+        return Response(serializer.data)
+    
+    def put(self, request, officer_id):
+        profile = self.get_object(officer_id)
+        serializer = TaxOfficerProfileSerializer(profile, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+    
+    def delete(self, request, officer_id):
+        profile = self.get_object(officer_id)
+        user = profile.user
+
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

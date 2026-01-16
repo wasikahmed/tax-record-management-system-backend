@@ -3,7 +3,9 @@ from .views import (
     TaxPayerListCreateView,
     TaxPayerDetailView,
     TaxZoneListCreateView,
-    TaxCategoryListCreateView
+    TaxCategoryListCreateView,
+    TaxOfficerListCreateView,
+    TaxOfficerDetailView
 )
 
 
@@ -13,5 +15,9 @@ urlpatterns = [
 
     # TaxPayer urls
     path('taxpayers/', TaxPayerListCreateView.as_view(), name='taxpayer-list-create'),
-    path('taxpayers/<int:tin>/', TaxPayerDetailView.as_view(), name='taxpayer-detail')
-]
+    path('taxpayers/<int:tin>/', TaxPayerDetailView.as_view(), name='taxpayer-detail'),
+
+    # TaxOfficer urls
+    path('taxofficer/', TaxOfficerListCreateView.as_view(), name='taxofficer-list-create'),
+    path('taxofficer/<int:officer_id>/', TaxOfficerDetailView.as_view(), name='taxofficer-detail'),
+    ]

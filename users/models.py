@@ -60,3 +60,22 @@ class TaxPayerProfile(models.Model):
 
     def __str__(self):
         return f"{self.tin} - {self.first_name}"
+
+
+class TaxOfficerProfile(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+
+    officer_id = models.BigAutoField(primary_key=True)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    rank = models.CharField(max_length=100)
+    branch = models.CharField(max_length=100)
+
+    # Address
+    house = models.CharField(max_length=100)
+    street = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    zip = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.officer_id} - {self.rank} - {self.first_name}"
