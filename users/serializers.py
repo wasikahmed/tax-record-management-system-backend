@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
+from django.contrib.auth.models import Group
 from .models import CustomUser, TaxPayerProfile, TaxZone, TaxCategory, TaxOfficerProfile
 
 
@@ -64,6 +65,10 @@ class TaxPayerProfileSerializer(serializers.ModelSerializer):
             user_serializer.is_valid(raise_exception=True)
             user = user_serializer.save()
 
+            # Assign Group
+            group = Group.objects.get_or_create(name='Taxpayers')
+            user.groups.add(group)
+
             # create TaxPayer instance
             profile = TaxPayerProfile.objects.create(user=user, **validated_data)
             return profile
@@ -112,6 +117,10 @@ class TaxOfficerProfileSerializer(serializers.ModelSerializer):
             user_serializer = CustomUserSerializer(data=user_data)
             user_serializer.is_valid(raise_exception=True)
             user = user_serializer.save()
+
+            # Assign Group
+            group = Group.objects.get_or_create(name='Officers')
+            user.groups.add(group)
 
             # create TaxOfficer instance
             profile = TaxOfficerProfile.objects.create(user=user, **validated_data)

@@ -2,7 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
+from .permissions import IsTaxOfficer, IsOwnerOrOfficer, IsTaxPayer
 from .models import TaxPayerProfile, TaxZone, TaxCategory, TaxOfficerProfile
 from .serializers import (
     TaxPayerProfileSerializer,
@@ -43,6 +45,11 @@ class TaxCategoryListCreateView(APIView):
 # TaxPayer Views
 
 class TaxPayerListCreateView(APIView):
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [AllowAny()]
+        return [IsTaxOfficer()]
+
     def get(self, request):
         profiles = TaxPayerProfile.objects.all()
         serializer = TaxPayerProfileSerializer(profiles, many=True)
@@ -57,6 +64,8 @@ class TaxPayerListCreateView(APIView):
     
 
 class TaxPayerDetailView(APIView):
+    permission_classes = [IsOwnerOrOfficer]
+
     def get_object(self, tin):
         return get_object_or_404(TaxPayerProfile, tin=tin)
     
