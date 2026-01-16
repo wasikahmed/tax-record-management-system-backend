@@ -2,11 +2,8 @@ from django.contrib.auth.models import BaseUserManager
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, user_id, password=None, **extra_fields):
-        if not user_id:
-            raise ValueError(("user_id must set"))
-        
-        user = self.model(user_id=user_id, **extra_fields)
+    def create_user(self, password=None, **extra_fields):
+        user = self.model(**extra_fields)
         user.set_password(password)
         user.save()
         return user
@@ -20,4 +17,5 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(('Superuser must have is_staff=True'))
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(('Superuser must have is_superuser=True'))
-        return self.create_user(user_id=user_id, password=password, **extra_fields)
+        
+        return self.create_user(password=password, **extra_fields)
