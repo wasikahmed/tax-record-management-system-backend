@@ -1,6 +1,9 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db import transaction
 from django.contrib.auth.models import Group
+from rest_framework.exceptions import AuthenticationFailed
+
 from .models import CustomUser, TaxPayerProfile, TaxZone, TaxCategory, TaxOfficerProfile
 
 
@@ -143,3 +146,70 @@ class TaxOfficerProfileSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+
+# Custom Login Serializer
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user_id'] = serializers.IntegerField(required=False)
+        self.fields['tin'] = serializers.IntegerField(required=False)
+        self.fields['officer_id'] = serializers.IntegerField(required=False)
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        tin = attrs.get('tin')
+        officer_id = attrs.get('officer_id')
+        user = None
+
+        if tin:
+            try:
+                profile = TaxPayerProfile.objects.get(tin=tin)
+                user = profile.user
+            except TaxPayerProfile.DoesNotExist:
+                raise AuthenticationFailed("No Taxpayer found with this TIN.")
+        
+        elif officer_id:
+            try:
+                profile = TaxOfficerProfile.objects.get(officer_id=officer_id)
+                user = profile.user
+            except TaxOfficerProfile.DoesNotExist:
+                raise AuthenticationFailed("No Officer found with this ID.")
+        
+        elif attrs.get('user_id'):
+            try:
+                user = CustomUser.objects.get(user_id=attrs.get('user_id'))
+            except CustomUser.DoesNotExist:
+                raise AuthenticationFailed("User ID not found.")
+        
+        else:
+            # FIX 2: Better error message
+            raise AuthenticationFailed("Must provide 'tin' or 'officer_id'.")
+
+        
+        # Authenticate
+        if user and user.check_password(password):
+            if not user.is_active:
+                raise AuthenticationFailed("User account is disabled.")
+
+            # generate token   
+            refresh = self.get_token(user)
+
+            # add custom claims to token
+            if hasattr(user, 'taxpayerprofile'):
+                refresh['role'] = 'taxpayer'
+                refresh['tin'] = user.taxpayerprofile.tin
+            elif hasattr(user, 'taxofficerprofile'):
+                refresh['role'] = 'officer'
+                refresh['officer_id'] = user.taxofficerprofile.officer_id
+            elif user.is_superuser:
+                refresh['role'] = 'admin'
+            
+            data = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'role': refresh.get('role', 'unknown')
+            }
+            return data
+    
+        raise AuthenticationFailed("Invalid credentials.")

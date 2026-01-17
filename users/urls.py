@@ -5,19 +5,21 @@ from .views import (
     TaxZoneListCreateView,
     TaxCategoryListCreateView,
     TaxOfficerListCreateView,
-    TaxOfficerDetailView
+    TaxOfficerDetailView,
+    CustomLoginView,
 )
 
 
 urlpatterns = [
-    path('zones/', TaxZoneListCreateView.as_view(), name='tax-zone-list-create'),
-    path('categories/', TaxCategoryListCreateView.as_view(), name='tax-category-list-create'),
+    # Auth
+    path('auth/login/', CustomLoginView.as_view(), name='auth-login'),
+
+    path('zones/', TaxZoneListCreateView.as_view(), name='zones'),
+    path('categories/', TaxCategoryListCreateView.as_view(), name='categories'),
 
     # TaxPayer urls
-    path('taxpayers/', TaxPayerListCreateView.as_view(), name='taxpayer-list-create'),
+    path('taxpayers/', TaxPayerListCreateView.as_view(), name='taxpayers'),
     path('taxpayers/<int:tin>/', TaxPayerDetailView.as_view(), name='taxpayer-detail'),
-
-    # TaxOfficer urls
-    path('taxofficer/', TaxOfficerListCreateView.as_view(), name='taxofficer-list-create'),
-    path('taxofficer/<int:officer_id>/', TaxOfficerDetailView.as_view(), name='taxofficer-detail'),
+    path('officers/', TaxOfficerListCreateView.as_view(), name='officers'),
+    path('officers/<int:officer_id>/', TaxOfficerDetailView.as_view(), name='officer-detail'),
     ]
